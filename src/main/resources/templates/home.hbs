@@ -1,0 +1,16 @@
+<html>
+<head>
+    <title hx-swap="innerHTML" hx-get="/user" hx-trigger="save from:body">{{name}}</title>
+</head>
+<body>
+{{> header}}
+
+<p>
+    Hello <span hx-swap="innerHTML" hx-get="/user" hx-trigger="save from:body">{{name}}</span>!
+</p>
+
+{{> mytemplate}}
+
+<script src="https://unpkg.com/htmx.org@1.9.2"></script>
+</body>
+</html>

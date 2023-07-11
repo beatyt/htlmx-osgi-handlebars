@@ -2,21 +2,17 @@ package org.osgi.example.htmlx;
 
 import com.github.jknack.handlebars.Handlebars;
 import com.github.jknack.handlebars.Template;
-import com.github.jknack.handlebars.io.ClassPathTemplateLoader;
 import com.github.jknack.handlebars.io.TemplateLoader;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.http.whiteboard.propertytypes.HttpWhiteboardResource;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.POST;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import java.io.File;
+import javax.servlet.http.HttpServletResponse;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Context;
+import javax.ws.rs.core.MediaType;
 import java.io.IOException;
-import java.util.TimeZone;
 
 @Component(service = Upper.class)
 @JaxrsResource
@@ -24,15 +20,30 @@ import java.util.TimeZone;
 @org.osgi.service.http.whiteboard.propertytypes.HttpWhiteboardContextSelect("(osgi.http.whiteboard.context.name=org.osgi.service.http)")
 public class Upper {
 
+    User user;
+
     @Activate
-    public void start() throws IOException {
+    public void start() {
         System.out.println("Started");
+        this.user = new User("Tom", 30);
     }
 
     @Path("rest/upper/{param}")
     @GET
     public String toUpper(@PathParam("param") String param) {
         return param.toUpperCase();
+    }
+
+    @Path("/home")
+    @GET
+    public String homePage() throws IOException {
+        TemplateLoader loader = new BundleClassPathTemplateLoader();
+        loader.setPrefix("templates");
+        Handlebars handlebars = new Handlebars(loader);
+
+        Template template = handlebars.compile("home");
+
+        return template.apply(this.user);
     }
 
     @Path("clicked")
@@ -42,13 +53,52 @@ public class Upper {
 
         TemplateLoader loader = new BundleClassPathTemplateLoader();
         loader.setPrefix("templates");
-//        loader.setSuffix(".html");
         Handlebars handlebars = new Handlebars(loader);
 
-        Template template = handlebars.compile("mytemplate");
+        UserTemplate template = handlebars.compile("mytemplate").as(UserTemplate.class);
 
-        System.out.println(template.apply("Handlebars.java"));
+        return template.apply(this.user);
+    }
 
-        return template.apply("Upper.java");
+    @Path("edit")
+    @GET
+    public String getEdit() throws IOException {
+        TemplateLoader loader = new BundleClassPathTemplateLoader();
+        loader.setPrefix("templates");
+        Handlebars handlebars = new Handlebars(loader);
+
+        UserTemplate template = handlebars.compile("edit-mytemplate").as(UserTemplate.class);
+
+        return template.apply(this.user);
+    }
+
+    @Path("save")
+    @PUT
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
+    public String saveEdit(
+            @FormParam("name") String name,
+            @FormParam("age") Integer age,
+            @Context HttpServletResponse servletResponse
+    ) throws IOException {
+        TemplateLoader loader = new BundleClassPathTemplateLoader();
+        loader.setPrefix("templates");
+        Handlebars handlebars = new Handlebars(loader);
+
+        UserTemplate template = handlebars.compile("mytemplate").as(UserTemplate.class);
+
+        this.user.name = name;
+        this.user.age = age;
+
+        servletResponse.setHeader("HX-Trigger", "save");
+        return template.apply(this.user);
+    }
+
+    @Path("/user")
+    @GET
+    public String getUser() throws IOException {
+        Handlebars handlebars = new Handlebars();
+        UserTemplate template = handlebars.compileInline("{{name}}").as(UserTemplate.class);
+
+        return template.apply(this.user);
     }
 }

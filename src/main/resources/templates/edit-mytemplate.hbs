@@ -1,0 +1,20 @@
+<form hx-put="/save" hx-swap="outerHTML">
+    <div hx-boost="true">
+        <input name="name" value="{{name}}"/>
+        <input name="age" value="{{age}}"/>
+
+        <button type="submit">Save</button>
+    </div>
+</form>
+
+<div hx-confirm="Are you sure?">
+    <button hx-delete="/account">
+        Delete My Account
+    </button>
+    <button hx-put="/account">
+        Update My Account
+    </button>
+    <button hx-confirm="unset" hx-get="/">
+        Cancel
+    </button>
+</div>
