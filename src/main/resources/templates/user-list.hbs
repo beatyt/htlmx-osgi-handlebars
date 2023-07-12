@@ -1,0 +1,5 @@
+<ul hx-get="/users" hx-trigger="create-user from:body" hx-swap>
+    {{#each users}}
+        <li>{{name}} - {{age}}</li>
+    {{/each}}
+</ul>

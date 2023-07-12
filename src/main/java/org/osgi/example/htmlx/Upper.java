@@ -101,4 +101,43 @@ public class Upper {
 
         return template.apply(this.user);
     }
+
+    @Path("/users")
+    @GET
+    public String getUsers() throws IOException {
+        TemplateLoader loader = new BundleClassPathTemplateLoader();
+        loader.setPrefix("templates");
+        Handlebars handlebars = new Handlebars(loader);
+        Template template = handlebars.compile("user-list");
+
+        return template.apply(this.user);
+    }
+
+    @Path("/users")
+    @POST
+    public String createUser(
+            @FormParam("name") String name,
+            @FormParam("age") Integer age,
+            @Context HttpServletResponse servletResponse
+    ) throws IOException {
+        TemplateLoader loader = new BundleClassPathTemplateLoader();
+        loader.setPrefix("templates");
+        Handlebars handlebars = new Handlebars(loader);
+        Template template = handlebars.compile("create-user");
+
+        this.user.users.add(new User(name, age));
+
+        servletResponse.setHeader("HX-Trigger", "create-user");
+
+        return template.apply(this.user);
+    }
+
+    @Path("/users/:id")
+    @GET
+    public String getUserById(@PathParam("id") Integer id) throws IOException {
+        Handlebars handlebars = new Handlebars();
+        UserTemplate template = handlebars.compileInline("{{name}}").as(UserTemplate.class);
+
+        return template.apply(this.user);
+    }
 }
