@@ -21,11 +21,12 @@ import java.io.IOException;
 public class Upper {
 
     User user;
+    int seq = 0;
 
     @Activate
     public void start() {
         System.out.println("Started");
-        this.user = new User("Tom", 30);
+        this.user = new User(seq++, "Tom", 30);
     }
 
     @Path("rest/upper/{param}")
@@ -125,19 +126,22 @@ public class Upper {
         Handlebars handlebars = new Handlebars(loader);
         Template template = handlebars.compile("create-user");
 
-        this.user.users.add(new User(name, age));
+        this.user.users.add(new User(seq++, name, age));
 
         servletResponse.setHeader("HX-Trigger", "create-user");
 
         return template.apply(this.user);
     }
 
-    @Path("/users/:id")
+    @Path("/users/{id}")
     @GET
     public String getUserById(@PathParam("id") Integer id) throws IOException {
-        Handlebars handlebars = new Handlebars();
-        UserTemplate template = handlebars.compileInline("{{name}}").as(UserTemplate.class);
+        TemplateLoader loader = new BundleClassPathTemplateLoader();
+        loader.setPrefix("templates");
+        Handlebars handlebars = new Handlebars(loader);
+        UserTemplate template = handlebars.compile("selected-user").as(UserTemplate.class);
 
-        return template.apply(this.user);
+
+        return template.apply(this.user.users.stream().filter(u -> u.id == id).findFirst().get());
     }
 }
